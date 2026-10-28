@@ -1,0 +1,483 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Football Stats</title>
+
+  <style>
+    :root {
+      --bg: #080808;
+      --panel: #111111;
+      --border: #2a2a2a;
+      --text: #f5f5f5;
+      --muted: #999999;
+      --green: #69db8c;
+      --red: #ff6868;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .container {
+      width: min(1440px, 100%);
+      margin: auto;
+      padding: 0 32px 40px;
+    }
+
+    header {
+      min-height: 92px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 18px;
+      padding: 15px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 3vw, 36px);
+      font-weight: 900;
+      letter-spacing: 3px;
+    }
+
+    .subtitle {
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      letter-spacing: 2px;
+    }
+
+    .connection {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: #777;
+    }
+
+    .dot.ok { background: var(--green); }
+    .dot.error { background: var(--red); }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      min-width: 0;
+    }
+
+    .main-panel {
+      padding: 34px;
+      margin-bottom: 20px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .live-row {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin: 42px 0 24px;
+    }
+
+    #liveValue {
+      font-size: clamp(68px, 10vw, 112px);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -4px;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+
+    .unit {
+      color: var(--muted);
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 10px 16px;
+      border: 1px solid #444;
+      border-radius: 30px;
+      font-size: 12px;
+      letter-spacing: 1px;
+      margin-bottom: 28px;
+    }
+
+    .bar-bg {
+      height: 7px;
+      background: #292929;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    #bar {
+      width: 0%;
+      height: 100%;
+      background: white;
+      transition: width .1s linear;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      margin: 12px 0 0;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .card { padding: 26px; }
+
+    .number {
+      margin-top: 20px;
+      font-size: clamp(30px, 4vw, 46px);
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+
+    .number small {
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: normal;
+    }
+
+    .bottom {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .section { padding: 26px; }
+
+    .section h2 {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: normal;
+      letter-spacing: 2px;
+    }
+
+    .history-row,
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .history-row:last-child,
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .history-row span:last-child,
+    .info-row span:last-child {
+      text-align: right;
+      font-weight: bold;
+    }
+
+    .empty { color: var(--muted); font-size: 14px; }
+
+    footer {
+      padding-top: 28px;
+      text-align: center;
+      color: #666;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+
+    @media (max-width: 760px) {
+      .container { padding: 0 16px 28px; }
+      .main-panel { padding: 24px 20px; }
+      .live-row { margin-top: 34px; }
+      #liveValue { letter-spacing: -2px; }
+      .cards, .bottom { grid-template-columns: 1fr; }
+      .card, .section { padding: 22px; }
+      .number { margin-top: 12px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>FOOTBALL STATS</h1>
+        <p class="subtitle">MEDIDOR DE FUERZA DE REMATE</p>
+      </div>
+
+      <div class="connection">
+        <span id="connectionDot" class="dot"></span>
+        <span id="connectionText">Conectando a Firebase...</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel main-panel">
+        <div class="label">Lectura en vivo</div>
+
+        <div class="live-row">
+          <span id="liveValue">0.00</span>
+          <span class="unit">kg</span>
+        </div>
+
+        <div id="status" class="status">CONECTANDO</div>
+
+        <div class="bar-bg">
+          <div id="bar"></div>
+        </div>
+
+        <p id="hint" class="hint">Esperando datos del medidor...</p>
+      </section>
+
+      <section class="cards">
+        <article class="panel card">
+          <div class="label">Último remate</div>
+          <div class="number">
+            <span id="lastShot">0.00</span> <small>kg</small>
+          </div>
+        </article>
+
+        <article class="panel card">
+          <div class="label">Récord de sesión</div>
+          <div class="number">
+            <span id="record">0.00</span> <small>kg</small>
+          </div>
+        </article>
+
+        <article class="panel card">
+          <div class="label">Remates registrados</div>
+          <div class="number" id="shotCount">0</div>
+        </article>
+      </section>
+
+      <section class="bottom">
+        <article class="panel section">
+          <h2>HISTORIAL DE REMATES</h2>
+          <div id="history">
+            <p class="empty">Los remates aparecerán aquí al finalizar.</p>
+          </div>
+        </article>
+
+        <article class="panel section">
+          <h2>ESTADO DEL SISTEMA</h2>
+
+          <div class="info-row">
+            <span>Firebase</span>
+            <span id="firebaseStatus">Esperando</span>
+          </div>
+
+          <div class="info-row">
+            <span>Medidor</span>
+            <span id="meterStatus">Esperando</span>
+          </div>
+
+          <div class="info-row">
+            <span>Actualización</span>
+            <span id="updatedAt">--:--:--</span>
+          </div>
+
+          <p class="hint">
+            La lectura vuelve a cero al terminar cada remate.
+          </p>
+        </article>
+      </section>
+    </main>
+
+    <footer>FOOTBALL STATS · PROYECTO TECNOLÓGICO</footer>
+  </div>
+
+  <script>
+    const FIREBASE_URL =
+      "https://medidor-de-fuerza-2026-default-rtdb.firebaseio.com/medidor.json";
+
+    const POLL_MS = 500;
+    const BAR_SCALE_KG = 20;
+
+    let requestRunning = false;
+    let lastCount = null;
+    let historyItems = [];
+
+    const $ = id => document.getElementById(id);
+
+    function toNumber(value) {
+      const result = Number(value);
+      return Number.isFinite(result) ? result : 0;
+    }
+
+    function fmt(value) {
+      return toNumber(value).toFixed(2);
+    }
+
+    function setConnection(ok, message) {
+      $("connectionDot").className = "dot " + (ok ? "ok" : "error");
+      $("connectionText").textContent = message;
+      $("firebaseStatus").textContent = ok ? "Conectado" : "Sin conexión";
+    }
+
+    function setStatus(value) {
+      const text = String(value || "ESPERANDO DATOS");
+      $("status").textContent = text;
+      $("meterStatus").textContent = text;
+
+      const active = text.toUpperCase().includes("GOLPE DETECTADO");
+      $("status").style.color = active ? "#69db8c" : "#f5f5f5";
+      $("status").style.borderColor = active ? "#69db8c" : "#444";
+    }
+
+    function updateHistory(data) {
+      const count = Math.max(0, Math.floor(toNumber(data.numeroGolpe)));
+      const lastShot = toNumber(data.ultimoPico);
+
+      if (lastCount === null) {
+        lastCount = count;
+
+        if (count > 0) {
+          historyItems.push({ number: count, value: lastShot });
+        }
+      } else if (count > lastCount) {
+        historyItems.unshift({ number: count, value: lastShot });
+        historyItems = historyItems.slice(0, 10);
+        lastCount = count;
+      } else if (count < lastCount) {
+        historyItems = [];
+        lastCount = count;
+      }
+
+      drawHistory();
+    }
+
+    function drawHistory() {
+      const container = $("history");
+      container.replaceChildren();
+
+      if (historyItems.length === 0) {
+        const message = document.createElement("p");
+        message.className = "empty";
+        message.textContent = "Los nuevos remates aparecerán aquí al finalizar.";
+        container.appendChild(message);
+        return;
+      }
+
+      historyItems.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "history-row";
+
+        const label = document.createElement("span");
+        label.textContent = "Remate #" + item.number;
+
+        const value = document.createElement("span");
+        value.textContent = fmt(item.value) + " kg";
+
+        row.append(label, value);
+        container.appendChild(row);
+      });
+    }
+
+    function updateUI(data) {
+      const state = String(data.estado || "LISTO");
+      const active = state.toUpperCase().includes("GOLPE DETECTADO");
+
+      const reading = toNumber(data.lectura);
+      const peak = toNumber(data.picoActual);
+
+      // Durante el golpe muestra el pico.
+      // Cuando termina, muestra lectura (cero), nunca el ultimo remate.
+      const liveValue = active ? peak : reading;
+
+      $("liveValue").textContent = fmt(liveValue);
+      $("lastShot").textContent = fmt(data.ultimoPico);
+      $("record").textContent = fmt(data.recordSesion);
+      $("shotCount").textContent = String(
+        Math.max(0, Math.floor(toNumber(data.numeroGolpe)))
+      );
+
+      setStatus(state);
+
+      const percentage = Math.max(
+        0,
+        Math.min(100, Math.abs(liveValue) / BAR_SCALE_KG * 100)
+      );
+
+      $("bar").style.width = percentage + "%";
+
+      $("hint").textContent = active
+        ? "Golpe en curso: mostrando el pico recibido del sensor."
+        : "Lectura en reposo: 0.00 kg. El último remate queda guardado abajo.";
+
+      $("updatedAt").textContent = new Date().toLocaleTimeString("es-AR");
+      updateHistory(data);
+    }
+
+    async function readFirebase() {
+      if (requestRunning) return;
+      requestRunning = true;
+
+      try {
+        const response = await fetch(
+          FIREBASE_URL + "?t=" + Date.now(),
+          { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+
+        const data = await response.json();
+
+        if (!data || typeof data !== "object") {
+          throw new Error("No hay datos en /medidor");
+        }
+
+        setConnection(true, "Firebase conectado");
+        updateUI(data);
+      } catch (error) {
+        setConnection(false, "Error de conexión");
+        $("hint").textContent =
+          "No se pueden leer los datos. Revisá Firebase y la conexión.";
+        console.error("Firebase:", error);
+      } finally {
+        requestRunning = false;
+      }
+    }
+
+    readFirebase();
+    setInterval(readFirebase, POLL_MS);
+  </script>
+</body>
+</html>
